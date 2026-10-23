@@ -24,6 +24,11 @@ def update_medicine():
     inventory[name] = int(quantity)
     return jsonify({"message": f"Updated {name} quantity to {quantity}."}), 200
 
+# v3 feature: View Inventory
+@app.route('/inventory', methods=['GET'])
+def view_inventory():
+    return jsonify({"inventory": inventory}), 200
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
