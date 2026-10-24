@@ -1,0 +1,38 @@
+pipeline {
+    agent any
+    environment {
+        DOCKER_HUB_USER = 'your-dockerhub-username'
+        APP_NAME        = 'medical-store'
+    }
+    stages {
+        stage('Environment Check') {
+            steps {
+                sh 'docker --version'
+            }
+        }
+        stage('Build & Push All Variants') {
+            steps {
+                // Automate building all variants across branches sequentially
+                sh '''
+                git checkout main
+                docker build -t ${DOCKER_HUB_USER}/${APP_NAME}:v1 .
+                
+                git checkout feature-v2
+                docker build -t ${DOCKER_HUB_USER}/${APP_NAME}:v2 .
+                
+                git checkout feature-v3
+                docker build -t ${DOCKER_HUB_USER}/${APP_NAME}:v3 .
+                '''
+                
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                    sh '''
+                    echo ${PASS} | docker login -u ${USER} --password-stdin
+                    docker push ${DOCKER_HUB_USER}/${APP_NAME}:v1
+                    docker push ${DOCKER_HUB_USER}/${APP_NAME}:v2
+                    docker push ${DOCKER_HUB_USER}/${APP_NAME}:v3
+                    '''
+                }
+            }
+        }
+    }
+}
